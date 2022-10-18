@@ -27,13 +27,13 @@ void transfer(char* infix, char* postfix) { //transfer infix to postix
 				//printf("stack_counter = %d\n", stack_counter);
 				if(priority(check)>priority(stack[stack_counter])) {
 					//printf("oper > \n");
-					if(stack_counter == 0){
+					if(stack_counter == 0) {
 						//printf("stack_counter = NULL \n");
-						stack[stack_counter] = check; 
-					}else{
+						stack[stack_counter] = check;
+					} else {
 						//printf("stack_counter != NULL \n");
 						stack[stack_counter] = stack[stack_counter - 1];
-						stack[stack_counter - 1] = check;	
+						stack[stack_counter - 1] = check;
 					}
 					stack_counter++;
 				} else if(priority(check)<priority(stack[stack_counter])) {
@@ -61,12 +61,12 @@ void transfer(char* infix, char* postfix) { //transfer infix to postix
 				postfix[postfix_counter] = infix[infix_counter];
 				postfix_counter += 1;
 			}
-			printf("postfix_counter = %d\n", postfix_counter);
+			/*printf("postfix_counter = %d\n", postfix_counter);
 			printf("postfix = %s\n", postfix);
 			printf("stack_counter = %d\n", stack_counter);
 			printf("stack = %s\n", stack);
 			printf("--------------------------------------------------\n");
-
+			*/
 		}
 		break;
 	}
@@ -90,15 +90,20 @@ int main(void) {
 	char infix[MAX] = {'\0'};
 	char postfix[MAX] = {'\0'};
 	int i;
+	FILE* input = fopen("infix.txt","r");
+	FILE* output = fopen("postfix.txt","w");
 
-	printf("Please enter infix expression : ");
-	scanf("%s",&infix);//input infix
+	//printf("Please enter infix expression : ");
+	fscanf(input,"%s",&infix);
+	//scanf("%s",&infix);//input infix
 	transfer(infix,postfix);//transfer infix to postfix
 
 	printf("Postfix expression = ");
 	for (i = 0; postfix[i] != '\0'; i++) {
+		fprintf(output,"%c",postfix[i]);
 		printf("%c",postfix[i]);//output postfix
 	}
 
-
+	fclose(input);
+	fclose(output);
 }
