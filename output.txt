@@ -1,5 +1,0 @@
-Mr.Brown 16 0
-Alice 26 1
-Jack 34 0
-God 56 0
-GiGi 33 1
