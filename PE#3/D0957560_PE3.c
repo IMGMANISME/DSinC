@@ -74,7 +74,7 @@ int main() {
 			}
 			teller_queue[close_teller].current_served_time = 0;//delete teller's served time record
 			teller_queue[close_teller].status = 0;//close teller's service window
-			printf("close teller No.%d's service window\n",close_teller);
+			//printf("close teller No.%d's service window\n",close_teller);
 			teller_queue[close_teller].count = 0;
 			continue;
 		} else if(strcmp("@",c1.name) == 0) {
@@ -84,7 +84,7 @@ int main() {
 			teller_amount++;
 			while(global_clock == set_open_clock) {
 				teller_queue[open_teller].status = 2;//open teller's service window
-				printf("open teller No.%d's service window\n",open_teller);
+				//printf("open teller No.%d's service window\n",open_teller);
 				break;
 			}
 			continue;
