@@ -38,8 +38,8 @@ int main() {
 	FILE* output = fopen("output.txt","w");
 	int i,j;
 
-	fscanf(input,"%d ",&teller_amount);
-	printf("%d\n",teller_amount);
+	fscanf(input,"%d",&teller_amount);
+	//printf("%d\n",teller_amount);
 
 	for(i = 0; i < teller_amount; i++) {
 		teller_queue[i].status = 2;//set teller to open situation
@@ -55,9 +55,7 @@ int main() {
 
 		//printf("%s\n",temp);
 
-		fscanf(input,"%s ",&c1.name);
-		fscanf(input," %d",&c1.arr_time);
-		fscanf(input," %d",&c1.ser_time);
+		fscanf(input,"%s %d %d",&c1.name,&c1.arr_time,&c1.ser_time);
 		//printf("%s %d %d\n",c1.name,c1.arr_time,c1.ser_time);
 		global_clock = c1.arr_time;
 
@@ -91,18 +89,22 @@ int main() {
 		} else {
 			//printf("$3\n");
 			add(c1.name,&c1.arr_time,&c1.ser_time);
+			/* 
 			printf("%s %d %d\n",c1.name,c1.arr_time,c1.ser_time);
 			fprintf(output,"%s %d %d\n",c1.name,c1.arr_time,c1.ser_time);
+			*/ 
+			}
+			for(i = 0; i < teller_amount;i ++){
+				for(j = 0;j < teller_queue[i].count; j++){
+					printf("teller_queue[%d] = %s\n",i,teller_queue[i].queue[j]);
+					printf("----------------------------------------------------\n");
+					
+				}
+			}
 		}
-
-		/*while(global_clock == ) {
-
-		}*/
+		fclose(input);
+		fclose(output);
 	}
-	fclose(input);
-	fclose(output);
-
-}
 
 
 
