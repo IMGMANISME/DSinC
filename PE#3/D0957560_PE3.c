@@ -4,116 +4,89 @@
 #define MAX_QUEUE_SIZE 10
 
 int global_clock = 0;
+int teller_amount = 0;
+int teller_count = 0;
 int last_arr_time[10] = {0};
 int last_ser_time[10] = {0};
-int teller_amount;
-int teller_number;
-int total_time;
 
 typedef struct Customer {
-	char name[10]; // å®¢æˆ¶åå­—
-	int arr_time; // å®¢æˆ¶åˆ°é”éŠ€è¡Œæ™‚é–“
-	int ser_time; // å®¢æˆ¶å®Œæˆæ¥­å‹™è¦èŠ±å¤šå°‘æ™‚é–“
+	char name[10]; // «È¤á¦W¦r
+	int arr_time; // «È¤á¨ì¹F»È¦æ®É¶¡
+	int ser_time; // «È¤á§¹¦¨·~°È­nªá¦h¤Ö®É¶¡
 } Customer;
 
-Customer c1;
+Customer C;
 
 typedef struct TellerQueue {
-	int status; // status, 0: close, 1:åªå‰©ä¸‹ä¸€ä½å®¢æˆ¶ï¼Œå³å°‡ close, 2: open
-	int front; // front pointerï¼ŒæŒ‡å‘ç¬¬ä¸€å€‹ element çš„ index
-	int rear; // rear pointerï¼ŒæŒ‡å‘æœ€å¾Œä¸€å€‹ element çš„ä¸‹ä¸€å€‹ index
-	int count; // queue ä¸­åœ¨æ’éšŠçš„äººæ•¸
-	int current_served_time; // ç›®å‰åœ¨è™•ç†æ¥­å‹™çš„å®¢äººåˆ°è™•ç†å®Œç•¢å‰©ä¸‹çš„æ™‚é–“
-	Customer queue[MAX_QUEUE_SIZE]; // ä»¥ array å‹å¼æ¨¡æ“¬ Circular Queueã€‚
+	int status; // status, 0: close, 1:¥u³Ñ¤U¤@¦ì«È¤á¡A§Y±N close, 2: open
+	int front; // front pointer¡A«ü¦V²Ä¤@­Ó element ªº index
+	int rear; // rear pointer¡A«ü¦V³Ì«á¤@­Ó element ªº¤U¤@­Ó index
+	int count; // queue ¤¤¦b±Æ¶¤ªº¤H¼Æ
+	int current_served_time; // ¥Ø«e¦b³B²z·~°Èªº«È¤H¨ì³B²z§¹²¦³Ñ¤Uªº®É¶¡
+	Customer queue[MAX_QUEUE_SIZE]; // ¥H array «¬¦¡¼ÒÀÀ Circular Queue¡C
 } TellerQueue;
 
 TellerQueue teller_queue[10];
 
-void add(char*,int*,int*);
+void add(char*, int*, int*);
 
-void delete(int*,int*);
+void close(int, int);
+
+void open(int, int);
+
+void check_leave();
 
 int main() {
 	FILE* input = fopen("input.txt","r");
 	FILE* output = fopen("output.txt","w");
-	int i,j;
+
+	char temp[20];
 
 	fscanf(input,"%d",&teller_amount);
-	//printf("%d\n",teller_amount);
+	teller_count = teller_amount;
+
+	int i,j;
 
 	for(i = 0; i < teller_amount; i++) {
-		teller_queue[i].status = 2;//set teller to open situation
-		teller_queue[i].front = 0;//set 0 for front
-		teller_queue[i].rear = 0;//set 0 for rear
-		teller_queue[i].count = 0;//set 0 for count
-		teller_queue[i].current_served_time = 0;//set 0 for current_served_time
+		teller_queue[i].status = 2;
+		teller_queue[i].count = 0;
+		teller_queue[i].front = 0;
+		teller_queue[i].rear = 1;
+		teller_queue[i].current_served_time = 0;
 	}
-
-	char temp[21];
 
 	while(fgets(temp, 20, input) != NULL) {
 
-		//printf("%s\n",temp);
+		fscanf(input,"%s %d %d",&C.name,&C.arr_time,&C.ser_time);
 
-		fscanf(input,"%s %d %d",&c1.name,&c1.arr_time,&c1.ser_time);
-		//printf("%s %d %d\n",c1.name,c1.arr_time,c1.ser_time);
-		global_clock = c1.arr_time;
-
-		if(strcmp("#",c1.name) == 0) {
-			//printf("$1\n");
-			int set_close_clock = c1.arr_time;
-			int close_teller = c1.ser_time;
-			teller_amount--;
-			while(global_clock == set_close_clock) {
-				teller_queue[close_teller].status = 1;
-				teller_queue[close_teller].count = 1;
-				delete(&c1.arr_time,&c1.ser_time);
-				break;
-			}
-			teller_queue[close_teller].current_served_time = 0;//delete teller's served time record
-			teller_queue[close_teller].status = 0;//close teller's service window
-			//printf("close teller No.%d's service window\n",close_teller);
-			teller_queue[close_teller].count = 0;
-			continue;
-		} else if(strcmp("@",c1.name) == 0) {
-			//printf("$2\n");
-			int set_open_clock = c1.arr_time;
-			int open_teller = c1.ser_time;
-			teller_amount++;
-			while(global_clock == set_open_clock) {
-				teller_queue[open_teller].status = 2;//open teller's service window
-				//printf("open teller No.%d's service window\n",open_teller);
-				break;
-			}
-			continue;
+		if(strcmp("#",C.name) == 0) {
+			int close_time = C.arr_time;
+			int close_teller = C.ser_time;
+			close(close_time,close_teller);
+			teller_count--;
+			//printf("input == #\n");
+		} else if(strcmp("@",C.name) == 0) {
+			int open_time = C.arr_time;
+			int open_teller = C.ser_time;
+			open(open_time,open_teller);
+			teller_count++;
+			//printf("input == @\n");
 		} else {
-			//printf("$3\n");
-			add(c1.name,&c1.arr_time,&c1.ser_time);
-			 
-			printf("%s %d %d\n",c1.name,c1.arr_time,c1.ser_time);
-			fprintf(output,"%s %d %d\n",c1.name,c1.arr_time,c1.ser_time);
-			
-			}
-			/* 
-			for(i = 0; i < teller_amount;i ++){
-				for(j = 0;j < teller_queue[i].count; j++){
-					printf("teller_queue[%d] = %s\n",i,teller_queue[i].queue[j]);
-					printf("----------------------------------------------------\n");
-					
-				}
-			}*/ 
+			add(C.name,&C.arr_time,&C.ser_time);
+			//printf("%s %d %d\n",C.name,C.arr_time,C.ser_time);
 		}
-		fclose(input);
-		fclose(output);
+		check_leave();
 	}
 
+	fclose(input);
+	fclose(output);
+}
 
-
-void add(char* a,int* b,int* c) {
-	int i;
-	int mini;
+void add(char* a, int* b, int* c) {
+	//global_clock = *b;
+	int i, j, mini;
 	if(teller_amount > 1) {
-		for(i = 0; i < teller_amount - 1; i++) {//find the minimum count in all teller's customer queue
+		for(i = 0; i < teller_count - 1; i++) {//find the minimum count in all teller's customer queue
 			if(teller_queue[i].count <= teller_queue[i + 1].count) {
 				mini = i;
 			} else {
@@ -123,34 +96,52 @@ void add(char* a,int* b,int* c) {
 	} else {
 		mini = 0;
 	}
-	teller_queue[mini].rear++;
-	teller_queue[mini].queue[teller_queue[mini].rear] = c1;//assign coustomer to teller's customer queue
 	if(teller_queue[mini].count == 0) {
 		teller_queue[mini].current_served_time = 0;
 	} else {
-		teller_queue[mini].current_served_time = (last_ser_time[mini] + teller_queue[mini].current_served_time) - (c1.arr_time - last_arr_time[mini]);
+		teller_queue[mini].current_served_time = (last_ser_time[mini] + teller_queue[mini].current_served_time) - (*b - last_arr_time[mini]);
 	}
+	last_arr_time[mini]= *b;
+	last_ser_time[mini]= *c;
+	strcpy(teller_queue[mini].queue[teller_queue[mini].rear].name,a);
+	teller_queue[mini].queue[teller_queue[mini].rear].arr_time = *b + *c + teller_queue[mini].current_served_time;
+	teller_queue[mini].queue[teller_queue[mini].rear].ser_time = mini;
+	global_clock = teller_queue[mini].queue[teller_queue[mini].rear].arr_time;
+	teller_queue[mini].rear++;
 	teller_queue[mini].count++;
-	last_arr_time[mini]= c1.arr_time;
-	last_ser_time[mini]= c1.ser_time;
-	*b = *b + *c + teller_queue[mini].current_served_time;
-	*c = mini;
+
+	//printf("%s %d %d\n", a, *b, *c);
 }
 
-void delete(int* b,int* c) {
-	int mini;
+void close(int a, int b) {
 	int i,j;
-	for(i = 0; i < teller_amount - 1; i++) {//find the minimum count in all teller's customer queue
-		if(teller_queue[i].count <= teller_queue[i + 1].count) {
-			mini = i;
-		} else {
-			mini = i + 1;
+	while(a == global_clock) {
+		for(i = teller_queue[b].front + 2; i <= teller_queue[b].rear; i++ )
+			add(teller_queue[b].queue[i].name,&teller_queue[b].queue[i].arr_time,&teller_queue[b].queue[i].ser_time);
+		teller_queue[b].status = 0;
+		teller_queue[b].count = 0;
+		teller_queue[b].rear = 1;
+		teller_queue[b].front = 0;
+		teller_queue[b].current_served_time = 0;
+	}
+}
+
+void open(int a, int b) {
+	while(a == global_clock) {
+		teller_queue[b].status = 2;
+		teller_queue[b].rear = 1;
+		teller_queue[b].front = 0;
+	}
+}
+
+void check_leave(global_time) {
+	int i, j;
+	for(i = 0; i < teller_amount; i++) {
+		for(j = teller_queue[i].front + 1; j < teller_queue[i].rear; j++) {
+			while(global_time == teller_queue[i].queue[j].arr_time){
+			}
+			printf("%s %d %d\n", teller_queue[i].queue[j].name, teller_queue[i].queue[j].arr_time ,teller_queue[i].queue[j].ser_time);
 		}
 	}
-
-	for(j = 0; j < teller_queue[*c].count - 1; j++) {
-		teller_queue[mini].queue[teller_queue[mini].rear + 1] =teller_queue[*c].queue[teller_queue[*c].rear + 1];
-		teller_queue[mini].rear ++;
-		teller_queue[*c].rear ++;
-	}
 }
+
