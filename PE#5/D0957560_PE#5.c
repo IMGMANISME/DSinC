@@ -1,11 +1,10 @@
-// Binary Search Tree operations in C
-
 #include <stdio.h>
 #include <stdlib.h>
 
 struct node {
 	int key;
-	struct node *left, *right;
+	struct node* left;
+	struct node* right;
 };
 
 // Create a node
@@ -19,10 +18,11 @@ struct node *newNode(int item) {
 // Insert a node
 struct node *insert(struct node *node, int key) {
 	// Return a new node if the tree is empty
-	if (node == NULL) return newNode(key);
-
+	if(node == NULL) {
+		return newNode(key);
+	}
 	// Traverse to the right place and insert the node
-	if (key < node->key) {
+	if(key < node->key) {
 		node->left = insert(node->left, key);
 	} else {
 		node->right = insert(node->right, key);
@@ -77,73 +77,78 @@ struct node *deleteNode(struct node *root, int key) {
 }
 
 struct node *root = NULL;
+int record[500] = {0};
 int cost_arr[500] = {0};
 int total_cost = 0;
 int i = 0;
+int j = 0;
 
-void inorder(struct node* ,int );
-
-int cal(int a) {
-	if(i == 0) {
-		cost_arr[i] = a;
-	} else {
-		cost_arr[i] = a + cost_arr[i - 1];
-		//root = insert(root, cost_arr[i]);
-	}
-//	root = deleteNode(root, a);
-//	root = insert(root, 0);
-	i++;
-}
-
-// Inorder Traversal
-void inorder(struct node *root,int a) {
+void inorder_cal(struct node *root) {
 
 	if (root != NULL) {
 		// Traverse left
-		inorder(root->left,a);
+		inorder_cal(root->left);
 
-		// Traverse root
-		printf("%d -> ", root->key);
-		if(a == 0) {
-			cal(root->key);
-		}
+		record[j] = root->key;
+		j++;
 
 		// Traverse right
-		inorder(root->right,a);
+		inorder_cal(root->right);
+	}
+}
+
+// Inorder Traversal
+void inorder(struct node *root) {
+
+	if (root != NULL) {
+		// Traverse left
+		inorder(root->left);
+
+		// Traverse root
+//		printf("%d -> ", root->key);
+
+		// Traverse right
+		inorder(root->right);
 	}
 }
 
 
-// Driver code
+// Main
 int main() {
 	int input;
 	int total;
-	int count = 0;
+	int count;
+	int check;
 	while(1) {
-		scanf("%d",&input);
-		if(input != 0) {
-			root = insert(root, input);
-			//root = deleteNode(root, input);
-			printf("---------------------------\n");
-			printf("Inorder traversal: ");
-			inorder(root, input);
-			printf("\n");
-			count++;
-		} else {
-			printf("---------------------------\n");
-			printf("Inorder traversal: ");
-			inorder(root, input);
-			printf("NULL\n");
-			if(count < 3) {
-				total_cost = 0;
-			} else {
-				for(i = 0; i < count; i++) {
-					printf("cost_arr[%d] = %d\n", i + 1, cost_arr[i]);
-					total_cost += cost_arr[i + 1];
-				}
-			}
-			printf("Total Cost = %d\n",total_cost);
+		scanf("%d",&count);
+		if(count == 0) {
 			break;
+		} else {
+			for(i = count; i > 0; i--) {
+				scanf("%d",&input);
+				root = insert(root, input);
+				inorder(root);
+			}
+
+			for(i = 0; i < count; i++) {
+				cost_arr[i] = record[0] + record[1];
+				root = insert(root, cost_arr[i]);
+				root = deleteNode(root, record[0]);
+				root = deleteNode(root, record[1]);
+				inorder_cal(root);
+				j = 0;
+			}
+
+			for(i = 0; i < count; i++) {
+				total_cost += cost_arr[i];
+			}
+			printf("%d\n",total_cost);
 		}
+		root = deleteNode(root, cost_arr[count - 1]);
+		root = deleteNode(root, input);
+		inorder_cal(root);
+		record[0] = 0;
+		record[1] = 0;
+		total_cost = 0;
 	}
 }
