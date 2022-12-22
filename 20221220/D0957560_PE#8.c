@@ -1,217 +1,177 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h>
+#include <stdbool.h>
 
-#define INF INT_MAX
-#define MAX_N 1000
+#define MAX_NODES 100
 
-struct Edge {
-	int u;
-	int v;
-	int w;
-};
-
+/* 定義圖形結構 */
 struct Graph {
-	int n;
-	int m;
-	struct Edge edges[MAX_N];
+	/* ?接表 */
+	struct Edge {
+		int v;  // 相?的節點??
+		int w;  // ?的?重
+		struct Edge* next;
+	}* edges[MAX_NODES];
+	int n;  // 節點?
+	int m;  // ??
 };
 
-struct HeapNode {
-	int v;
-	int dist;
+/* 定義節點信息結構 */
+struct NodeInfo {
+	int id;  // 節點??
+	int distance;  // 節點到起始節點的距離
 };
 
-struct Heap {
-	int size;
-	int capacity;
-	int *pos;
-	struct HeapNode **nodes;
+/* 定義最小堆結構 */
+struct MinHeap {
+	struct NodeInfo nodes[MAX_NODES];  // 堆中的節點
+	int size;  // 堆的大小
 };
 
-struct Graph *create_graph(int n, int m) {
-	struct Graph *graph = malloc(sizeof(struct Graph));
-	graph->n = n;
-	graph->m = m;
-	return graph;
-}
-
-void add_edge(struct Graph *graph, int u, int v, int w) {
-	graph->edges[graph->m].u = u;
-	graph->edges[graph->m].v = v;
-	graph->edges[graph->m].w = w;
-	graph->m++;
-}
-
-struct HeapNode *create_heap_node(int v, int dist) {
-	struct HeapNode *node = malloc(sizeof(struct HeapNode));
-	node->v = v;
-	node->dist = dist;
-	return node;
-}
-
-struct Heap *create_heap(int capacity) {
-	struct Heap *heap = malloc(sizeof(struct Heap));
-	heap->pos = malloc(capacity * sizeof(int));
-	heap->size = 0;
-	heap->capacity = capacity;
-	heap->nodes = malloc(capacity * sizeof(struct HeapNode*));
-	return heap;
-}
-
-void swap_heap_node(struct HeapNode **a, struct HeapNode **b) {
-	struct HeapNode *temp = *a;
-	*a = *b;
-	*b = temp;
-}
-
-void min_heapify(struct Heap *heap, int idx) {
-	int smallest, left, right;
-	smallest = idx;
-	left = 2 * idx + 1;
-	right = 2 * idx + 2;
-
-	if (left < heap->size && heap->nodes[left]->dist < heap->nodes[smallest]->dist)
-		smallest = left;
-
-	if (right < heap->size && heap->nodes[right]->dist < heap->nodes[smallest]->dist)
-		smallest = right;
-
-	if (smallest != idx) {
-		HeapNode *smallest_node = heap->nodes[smallest];
-		HeapNode *idx_node = heap->nodes[idx];
-
-		heap->pos[smallest_node->v] = idx;
-		heap->pos[idx_node->v] = smallest;
-
-		swap_heap_node(&heap->nodes[smallest], &heap->nodes[idx]);
-		min_heapify(heap, smallest);
+/* ?節點加入最小堆中 */
+void push(struct MinHeap* heap, struct NodeInfo node) {
+	heap->nodes[heap->size] = node;  // ?節點放在堆底
+	int i = heap->size;
+	int parent = (i - 1) / 2;
+	while (i > 0 && heap->nodes[i].distance < heap->nodes[parent].distance) {
+		/* 交?節點位置 */
+		struct NodeInfo temp = heap->nodes[i];
+		heap->nodes[i] = heap->nodes[parent];
+		heap->nodes[parent] = temp;
+		i = parent;
+		parent = (i - 1) / 2;
 	}
+	heap->size++;
 }
 
-int is_empty(struct Heap *heap) {
-	return heap->size == 0;
-}
-
-struct HeapNode *extract_min(struct Heap *heap) {
-	if (is_empty(heap))
-		return NULL;
-
-	struct HeapNode *root = heap->n;
-	root = heap->nodes[0];
-	struct HeapNode *last_node = heap->nodes[heap->size - 1];
-	heap->nodes[0] = last_node;
-
-	heap->pos[root->v] = heap->size - 1;
-	heap->pos[last_node->v] = 0;
-
-	--heap->size;
-	min_heapify(heap, 0);
-
-	return root;
-}
-
-void decrease_key(struct Heap *heap, int v, int dist) {
-	int i = heap->pos[v];
-	heap->nodes[i]->dist = dist;
-
-	while (i && heap->nodes[i]->dist < heap->nodes[(i - 1) / 2]->dist) {
-		heap->pos[heap->nodes[i]->v] = (i - 1) / 2;
-		heap->pos[heap->nodes[(i - 1) / 2]->v] = i;
-		swap_heap_node(&heap->nodes[i], &heap->nodes[(i - 1) / 2]);
-
-		i = (i - 1) / 2;
+/* ?最小堆中取出最小值 */
+struct NodeInfo pop(struct MinHeap* heap) {
+	struct NodeInfo min = heap->nodes[0];
+	heap->nodes[0] = heap->nodes[heap->size - 1];
+	heap->size--;
+	int i = 0;
+	while (true) {
+		int left = 2 * i + 1;
+		int right = 2 * i + 2;
+		int smallest = i;
+		if (left < heap->size && heap->nodes[left].distance < heap->nodes[smallest].distance) {
+			smallest = left;
+		}
+		if (right < heap->size && heap->nodes[right].distance < heap->nodes[smallest].distance) {
+			smallest = right;
+		}
+		if (smallest != i) {
+			/* 交?節點位置 */
+			struct NodeInfo temp = heap->nodes[i];
+			heap->nodes[i] = heap->nodes[smallest];
+			heap->nodes[smallest] = temp;
+			i = smallest;
+		} else {
+			break;
+		}
 	}
+	return min;
 }
 
-bool is_in_min_heap(struct Heap *heap, int v) {
-	return heap->pos[v] < heap->size;
-}
-
-void dijkstra(struct Graph *graph, int src, int *dist, int *predecessor) {
-	int V = graph->n;
-	struct Heap *heap = create_heap(V);
-
-	for (int v = 0; v < V; ++v) {
-		dist[v] = INF;
-		predecessor[v] = -1;
-		heap->nodes[v] = create_heap_node(v, dist[v]);
-		heap->pos[v] = v;
+/* 迪杰斯特拉演算法函? */
+int dijkstra(struct Graph* graph, int source, int* distances) {
+	/* 初始化最小堆和已知最短路徑的節點數組 */
+	struct MinHeap heap;
+	int i;
+	heap.size = 0;
+	bool known[MAX_NODES];
+	for (i = 0; i < graph->n; i++) {
+		distances[i] = -1;
+		known[i] = false;
 	}
+	distances[source] = 0;
+	push(&heap, (struct NodeInfo) {
+		source, 0
+	});
 
-	heap->nodes[src] = create_heap_node(src, dist[src]);
-	heap->pos[src] = src;
-	dist[src] = 0;
-	decrease_key(heap, src, dist[src]);
-
-	heap->size = V;
-
-	while (!is_empty(heap)) {
-		struct HeapNode *min_node = extract_min(heap);
-		int u = min_node->v;
-		free(min_node);
-
-		for (int i = 0; i < graph->m; ++i) {
-			int v = graph->edges[i].v;
-			int w = graph->edges[i].w;
-
-			if (dist[u] != INF && dist[u] + w < dist[v]) {
-				dist[v] = dist[u] + w;
-				predecessor[v] = u;
-
-				if (is_in_min_heap(heap, v))
-					decrease_key(heap, v, dist[v]);
+	/* 循環直到最小堆為空，執行以下步驟 */
+	while (heap.size > 0) {
+		struct NodeInfo min = pop(&heap);
+		int u = min.id;
+		known[u] = true;
+		struct Edge* e;
+		for (e = graph->edges[u]; e != NULL; e = e->next) {
+			int v = e->v;
+			if (!known[v]) {
+				int distance = distances[u] + e->w;
+				if (distances[v] == -1 || distance < distances[v]) {
+					distances[v] = distance;
+					push(&heap, (struct NodeInfo) {
+						v, distance
+					});
+				}
 			}
 		}
 	}
-}
 
-int compute_largest_possible_number_of_planets(struct Graph *graph, int src) {
-	int n = graph->n;
-	int m = graph->m;
-	int dist[n];
-	int predecessor[n];
-	dijkstra(graph, src, dist, predecessor);
-
+	/* 找到最短路徑最長的節點 */
 	int max_distance = 0;
-	int max_distance_planet = src;
-	for (int i = 0; i < n; ++i) {
-		if (i == src)
-			continue;
-		if (dist[i] > max_distance) {
-			max_distance = dist[i];
-			max_distance_planet = i;
+	int max_distance_node = -1;
+	for (i = 0; i < graph->n; i++) {
+		if (distances[i] > max_distance) {
+			max_distance = distances[i];
+			max_distance_node = i;
 		}
 	}
 
-	dijkstra(graph, max_distance_planet, dist, predecessor);
-	int max_diameter = 0;
-	for (int i = 0; i < n; ++i) {
-		if (dist[i] > max_diameter)
-			max_diameter = dist[i];
-	}
-
-	return max_diameter;
+	return max_distance_node;
 }
 
 int main() {
-	int n, m;
-	scanf("%d %d", &n, &m);
+	/* 輸入圖形的節點數和?? */
+	while(1) {
+		int test;
+		scanf("%d",&test);
+		if(test == 0){
+			break;
+		}
+		int i;
+		for(i = 0; i < test; i++) {
+			int n, m;
+			scanf("%d%d", &n, &m);
 
-	struct Graph *graph = create_graph(n, m);
+			/* 創建圖形 */
+			struct Graph graph;
+			graph.n = n;
+			graph.m = m;
+			int i;
+			for (i = 0; i < n; i++) {
+				graph.edges[i] = NULL;
+			}
 
-	for (int i = 0; i < m; ++i) {
-		int u, v, w;
-		scanf("%d %d %d", &u, &v, &w);
-		add_edge(graph, u, v, w);
-		add_edge(graph, v, u, w);
+			/* 輸入?的信息並加入圖形 */
+			for (i = 0; i < m; i++) {
+				int u, v, w;
+				scanf("%d%d%d", &u, &v, &w);
+				struct Edge* edge = (struct Edge*)malloc(sizeof(struct Edge));
+				edge->v = v;
+				edge->w = w;
+				edge->next = graph.edges[u];
+				graph.edges[u] = edge;
+			}
+
+			/* 執行迪杰斯特拉演算法 */
+			int distances[MAX_NODES];
+			int max_distance_node = dijkstra(&graph, 0, distances);
+
+			/* 輸出最大範圍?的節點數 */
+			int count = 0;
+			for (i = 0; i < n; i++) {
+				if (distances[i] <= distances[max_distance_node]) {
+					count++;
+				}
+			}
+			printf("%d\n", count - 1);
+		}
 	}
-
-	int src = 0;
-	printf("%d\n", compute_largest_possible_number_of_planets(graph, src));
-
 	return 0;
 }
+
 
 
 
