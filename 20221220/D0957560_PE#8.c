@@ -6,35 +6,34 @@
 
 /* 定義圖形結構 */
 struct Graph {
-	/* ?接表 */
 	struct Edge {
-		int v;  // 相?的節點??
-		int w;  // ?的?重
+		int v;  //相臨的節點編號
+		int w;  //邊的權重
 		struct Edge* next;
 	}* edges[MAX_NODES];
-	int n;  // 節點?
-	int m;  // ??
+	int n;  //節點數
+	int m;  //邊數
 };
 
-/* 定義節點信息結構 */
+/* 定義節點結構 */
 struct NodeInfo {
-	int id;  // 節點??
+	int id;  // 節點編號
 	int distance;  // 節點到起始節點的距離
 };
 
 /* 定義最小堆結構 */
 struct MinHeap {
 	struct NodeInfo nodes[MAX_NODES];  // 堆中的節點
-	int size;  // 堆的大小
+	int size;  //堆的大小
 };
 
-/* ?節點加入最小堆中 */
+/* 將節點加入最小堆中 */
 void push(struct MinHeap* heap, struct NodeInfo node) {
-	heap->nodes[heap->size] = node;  // ?節點放在堆底
+	heap->nodes[heap->size] = node;  //將節點放在堆底
 	int i = heap->size;
 	int parent = (i - 1) / 2;
 	while (i > 0 && heap->nodes[i].distance < heap->nodes[parent].distance) {
-		/* 交?節點位置 */
+		/* 交換節點位置 */
 		struct NodeInfo temp = heap->nodes[i];
 		heap->nodes[i] = heap->nodes[parent];
 		heap->nodes[parent] = temp;
@@ -44,7 +43,7 @@ void push(struct MinHeap* heap, struct NodeInfo node) {
 	heap->size++;
 }
 
-/* ?最小堆中取出最小值 */
+/* 從最小堆中取出最小值 */
 struct NodeInfo pop(struct MinHeap* heap) {
 	struct NodeInfo min = heap->nodes[0];
 	heap->nodes[0] = heap->nodes[heap->size - 1];
@@ -61,7 +60,7 @@ struct NodeInfo pop(struct MinHeap* heap) {
 			smallest = right;
 		}
 		if (smallest != i) {
-			/* 交?節點位置 */
+			/* 交換節點位置 */
 			struct NodeInfo temp = heap->nodes[i];
 			heap->nodes[i] = heap->nodes[smallest];
 			heap->nodes[smallest] = temp;
@@ -73,7 +72,7 @@ struct NodeInfo pop(struct MinHeap* heap) {
 	return min;
 }
 
-/* 迪杰斯特拉演算法函? */
+/* Dijkstra */
 int dijkstra(struct Graph* graph, int source, int* distances) {
 	/* 初始化最小堆和已知最短路徑的節點數組 */
 	struct MinHeap heap;
@@ -123,11 +122,11 @@ int dijkstra(struct Graph* graph, int source, int* distances) {
 }
 
 int main() {
-	/* 輸入圖形的節點數和?? */
+	/* 輸入圖形的節點數和邊數 */
 	while(1) {
 		int test;
 		scanf("%d",&test);
-		if(test == 0){
+		if(test == 0) {
 			break;
 		}
 		int i;
@@ -144,7 +143,7 @@ int main() {
 				graph.edges[i] = NULL;
 			}
 
-			/* 輸入?的信息並加入圖形 */
+			/* 輸入邊的信息並加入圖形 */
 			for (i = 0; i < m; i++) {
 				int u, v, w;
 				scanf("%d%d%d", &u, &v, &w);
@@ -155,11 +154,11 @@ int main() {
 				graph.edges[u] = edge;
 			}
 
-			/* 執行迪杰斯特拉演算法 */
+			/* Dijkstra */
 			int distances[MAX_NODES];
 			int max_distance_node = dijkstra(&graph, 0, distances);
 
-			/* 輸出最大範圍?的節點數 */
+			/* 輸出最大範圍內的節點數 */
 			int count = 0;
 			for (i = 0; i < n; i++) {
 				if (distances[i] <= distances[max_distance_node]) {
